@@ -4,7 +4,7 @@ from django import forms
 from django.db.models import Q
 from django.urls import path
 from django.http import JsonResponse
-
+from django.utils.safestring import mark_safe
 from datetime import date
 
 
@@ -69,9 +69,19 @@ class ProjectForm(forms.ModelForm):
 from django.urls import reverse
 from django.utils.html import format_html
 
+
+
 class ProjectAdmin(MasterAdmin):
     
-    list_display = ('name', 'status', 'start_date', 'end_date', 'priority', 'task_count', 'view_tasks_link')
+    list_display = ('name', 'status', 'start_date', 'end_date', 'priority', 'task_count', 'view_tasks_link', 'add_task_link')
+
+    def add_task_link(self, obj):
+        """Generates a link to add a task and passes the project ID."""
+        url = reverse('admin:project_task_add')  # The URL for adding a task
+        url_with_project = f'{url}?project={obj.id}'  # Append the project ID to the URL
+        return mark_safe(f'<a href="{url_with_project}">Add Task</a>')
+
+    add_task_link.short_description = 'Add Task'
 
     def view_tasks_link(self, obj):
         """Generates a link to view tasks of the project."""
@@ -176,7 +186,26 @@ class TaskAdmin(MasterAdmin):
     readonly_fields = ('created_user','due_date')
     inlines = [FileInline]
     list_display = ('project', 'title', 'status', 'priority')
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
 
+        # Extract the project ID from the filter query in the URL
+        project_filter = request.GET.get('_changelist_filters')
+        project_id = None
+
+        if project_filter:
+            # Extract project ID from the filter string
+            filter_parts = project_filter.split('=')
+            if len(filter_parts) > 1:
+                project_id = filter_parts[-1]
+
+        # Log the project ID to verify it's being captured
+       
+
+        if project_id:
+            form.base_fields['project'].initial = project_id
+
+        return form
 
     def save_related(self, request, form, formsets, change):
         # Attach the request object to each inline instance
