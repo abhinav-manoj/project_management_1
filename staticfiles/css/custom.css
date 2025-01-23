@@ -1,0 +1,6 @@
+/* Resize the logo to fit */
+#admin-logo {
+    max-width: 100%;  /* Ensures the logo fits within the available space */
+    height: auto;     /* Maintain aspect ratio */
+    max-height: 80px; /* Adjust the height as needed */
+}

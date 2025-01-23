@@ -1,0 +1,39 @@
+
+{% extends "admin/change_form.html" %}
+{% block extrahead %}
+{{ block.super }}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const projectField = document.querySelector("#id_project");
+        const assignedToField = document.querySelector("#id_assigned_to");
+
+        if (projectField) {
+            projectField.addEventListener("change", function () {
+                const projectId = projectField.value;
+
+                if (projectId) {
+                    $.ajax({
+                        url: "{% url 'admin:fetch-team-members' %}",
+                        data: { project_id: projectId },
+                        success: function (data) {
+                            if (data.team_members) {
+                                assignedToField.innerHTML = "";
+                                data.team_members.forEach(member => {
+                                    const option = document.createElement("option");
+                                    option.value = member.id;
+                                    option.textContent = member.username;
+                                    assignedToField.appendChild(option);
+                                });
+                            }
+                        },
+                        error: function (xhr) {
+                            console.error("Failed to fetch team members:", xhr.responseText);
+                        }
+                    });
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
